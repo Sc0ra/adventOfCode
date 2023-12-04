@@ -1,62 +1,57 @@
 import { readFileSync } from 'fs';
 import path from 'path';
 
-enum EnemyShape {
-  Rock = 'A',
-  Paper = 'B',
-  Scissors = 'C'
-}
+type Color = 'red' | 'green' | 'blue';
 
-enum OwnShape {
-  Rock = 'X',
-  Paper = 'Y',
-  Scissors = 'Z'
-}
+type Draw = Partial<Record<Color, number>>;
 
 type InputLine = {
-  enemyShape: EnemyShape;
-  ownShape: OwnShape;
-}
+  gameId: number;
+  draws: Draw[];
+};
 
-
-const scoreByOwnShape: Record<OwnShape, number> = {
-  [OwnShape.Rock]: 1,
-  [OwnShape.Paper]: 2,
-  [OwnShape.Scissors]: 3,
-}
-
-const scoreByDuel: Record<EnemyShape, Record<OwnShape, number>> = {
-  [EnemyShape.Rock]: {
-    [OwnShape.Rock]: 3,
-    [OwnShape.Paper]: 6,
-    [OwnShape.Scissors]: 0,
-  },
-  [EnemyShape.Paper]: {
-    [OwnShape.Rock]: 0,
-    [OwnShape.Paper]: 3,
-    [OwnShape.Scissors]: 6,
-  },
-  [EnemyShape.Scissors]: {
-    [OwnShape.Rock]: 6,
-    [OwnShape.Paper]: 0,
-    [OwnShape.Scissors]: 3,
-  },
+const maximums: Record<Color, number> = {
+  blue: 14,
+  green: 13,
+  red: 12,
 };
 
 export const exercise1 = () => {
   const file = readFileSync(path.join(__dirname, 'input.txt'), 'utf8');
-  const input: InputLine[] = file.split('\n').map(line => ({
-    enemyShape: line[0] as EnemyShape,
-    ownShape: line[2] as OwnShape,
-  }))
+  const input: InputLine[] = file.split('\n').map(line => {
+    const [gameString, drawsString] = line.split(':');
+    const gameId = Number.parseInt(gameString.split(' ')[1]);
 
-  const result = input.reduce<number>(
-    (totalScore, line) => {
-      totalScore += scoreByOwnShape[line.ownShape];
-      totalScore += scoreByDuel[line.enemyShape][line.ownShape];
-      return totalScore;
-    }, 0
-  );
+    const draws = drawsString.split(';').map(drawString => {
+      const draw: Draw = drawString.split(',').reduce((acc, colorString) => {
+        const [, numString, color] = colorString.split(' ');
+
+        return {
+          ...acc,
+          [color]: Number.parseInt(numString),
+        };
+      }, {});
+
+      return draw;
+    });
+
+    return {
+      gameId,
+      draws,
+    };
+  });
+
+  const result = input.reduce((acc, inputLine) => {
+    const isValid = inputLine.draws.every(draw => {
+      return Object.entries(draw).every(
+        ([color, count]) => count <= maximums[color],
+      );
+    });
+    if (isValid) {
+      return acc + inputLine.gameId;
+    }
+    return acc;
+  }, 0);
 
   return result;
 };

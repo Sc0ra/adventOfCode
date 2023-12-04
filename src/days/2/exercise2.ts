@@ -1,71 +1,68 @@
 import { readFileSync } from 'fs';
 import path from 'path';
 
-enum Shape {
-  Rock = 'A',
-  Paper = 'B',
-  Scissors = 'C'
-}
+type Color = 'red' | 'green' | 'blue';
 
-enum DuelResult {
-  Lose = 'X',
-  Draw   = 'Y',
-  Win = 'Z'
-}
+type Draw = Partial<Record<Color, number>>;
 
 type InputLine = {
-  enemyShape: Shape;
-  duelResult: DuelResult;
-}
-
-
-const ownShapeByEnemyShapeAndDuelResult: Record<Shape, Record<DuelResult, Shape>> = {
-  [Shape.Paper]: {
-    [DuelResult.Lose]: Shape.Rock,
-    [DuelResult.Draw]: Shape.Paper,
-    [DuelResult.Win]: Shape.Scissors,
-  },
-  [Shape.Rock]: {
-    [DuelResult.Lose]: Shape.Scissors,
-    [DuelResult.Draw]: Shape.Rock,
-    [DuelResult.Win]: Shape.Paper,
-  },
-  [Shape.Scissors]: {
-    [DuelResult.Lose]: Shape.Paper,
-    [DuelResult.Draw]: Shape.Scissors,
-    [DuelResult.Win]: Shape.Rock,
-  }
-}
-
-const scoreByDuel: Record<DuelResult, number> = {
-  [DuelResult.Lose]: 0,
-  [DuelResult.Draw]: 3,
-  [DuelResult.Win]: 6
+  gameId: number;
+  draws: Draw[];
 };
 
-const scoreByShape: Record<Shape, number> = {
-  [Shape.Rock]: 1,
-  [Shape.Paper]: 2,
-  [Shape.Scissors]: 3
+const maximums: Record<Color, number> = {
+  blue: 14,
+  green: 13,
+  red: 12,
 };
 
-export const exercise2 = () => {
+export const exercise1 = () => {
   const file = readFileSync(path.join(__dirname, 'input.txt'), 'utf8');
-  const input: InputLine[] = file.split('\n').map(line => ({
-    enemyShape: line[0] as Shape,
-    duelResult: line[2] as DuelResult,
-  }));
+  const input: InputLine[] = file.split('\n').map(line => {
+    const [gameString, drawsString] = line.split(':');
+    const gameId = Number.parseInt(gameString.split(' ')[1]);
 
-  const result = input.reduce<number>(
-    (totalScore, line) => {
-      const ownShape: Shape = ownShapeByEnemyShapeAndDuelResult[line.enemyShape][line.duelResult];
-      totalScore += scoreByShape[ownShape];
-      totalScore += scoreByDuel[line.duelResult];
-      return totalScore;
-    }, 0
-  );
+    const draws = drawsString.split(';').map(drawString => {
+      const draw: Draw = drawString.split(',').reduce((acc, colorString) => {
+        const [, numString, color] = colorString.split(' ');
+
+        return {
+          ...acc,
+          [color]: Number.parseInt(numString),
+        };
+      }, {});
+
+      return draw;
+    });
+
+    return {
+      gameId,
+      draws,
+    };
+  });
+
+  const result = input.reduce((acc, inputLine) => {
+    const counts: Draw = inputLine.draws.reduce(
+      (acc, draw) => ({
+        blue: Math.max(acc.blue ?? 0, draw.blue ?? 0),
+        red: Math.max(acc.red ?? 0, draw.red ?? 0),
+        green: Math.max(acc.green ?? 0, draw.green ?? 0),
+      }),
+      {
+        blue: 0,
+        red: 0,
+        green: 0,
+      },
+    );
+
+    console.log(counts);
+
+    const power = (counts.blue ?? 0) * (counts.red ?? 0) * (counts.green ?? 0);
+
+    return acc + power;
+  }, 0);
 
   return result;
 };
 
-console.log(exercise2());
+console.log(exercise1());
