@@ -10,6 +10,20 @@ export class Node<NodeType, EdgeType> {
   addNeighbor(node: Node<NodeType, EdgeType>, weight: EdgeType) {
     this.neighbors.push({ node, weight });
   }
+
+  toString() {
+    return JSON.stringify(
+      {
+        value: this.value,
+        neighbors: this.neighbors.map(({ weight, node }) => ({
+          weight,
+          value: node.value,
+        })),
+      },
+      null,
+      2,
+    );
+  }
 }
 
 export class Graph<NodeType, EdgeType> {
