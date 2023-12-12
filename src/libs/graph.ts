@@ -26,16 +26,18 @@ export class Node<NodeType, EdgeType> {
   }
 }
 
-export class Graph<NodeType, EdgeType> {
-  nodes: Node<NodeType, EdgeType>[];
+export class Graph<NodeType extends { name: string }, EdgeType> {
+  nodes: Record<string, Node<NodeType, EdgeType>>;
+  edges: { a: string; b: string }[];
 
   constructor() {
-    this.nodes = [];
+    this.nodes = {};
+    this.edges = [];
   }
 
   addNode(value: NodeType) {
     const node = new Node<NodeType, EdgeType>(value);
-    this.nodes.push(node);
+    this.nodes[value.name] = node;
   }
 
   addEdge(
@@ -43,6 +45,7 @@ export class Graph<NodeType, EdgeType> {
     destination: Node<NodeType, EdgeType>,
     weight: EdgeType,
   ) {
+    this.edges.push({ a: source.value.name, b: destination.value.name });
     source.addNeighbor(destination, weight);
   }
 }
